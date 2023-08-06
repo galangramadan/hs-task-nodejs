@@ -95,4 +95,80 @@ const postByUserId = async (req, res) => {
   }
 };
 
-module.exports = { create, allPost, postById, postByUserId };
+const updatePost = async (req, res) => {
+  try {
+    const idUser = req.user.id;
+    const idPost = parseInt(req.params.postId);
+    const { title, body } = req.body;
+
+    const post = await postNew.findOne({
+      where: { id: idPost },
+    });
+
+    if (post == null)
+      return res.status(404).send({ message: "post not found" });
+
+    if (idUser != post.user_id)
+      return res
+        .status(403)
+        .send({ message: "forbidden, post can only be updated by its user" });
+
+    const update = await postNew.update(
+      {
+        title: title,
+        body: body,
+      },
+      { where: { id: idPost } }
+    );
+
+    return res.status(201).send({
+      message: "post has been updated",
+      data: update,
+    });
+  } catch (error) {
+    return res.send({
+      message: "error occured",
+      data: error,
+    });
+  }
+};
+
+const deletePost = async (req, res) => {
+  try {
+    const idUser = req.user.id;
+    const idPost = parseInt(req.params.postId);
+
+    const post = await postNew.findOne({
+      where: { id: idPost },
+    });
+
+    if (post == null)
+      return res.status(404).send({ message: "post not found" });
+
+    if (idUser != post.user_id)
+      return res
+        .status(403)
+        .send({ message: "forbidden, post can only be deleted by its user" });
+
+    const deletedPost = await postNew.destroy({ where: { id: idPost } });
+
+    return res.status(201).send({
+      message: "post has been deleted",
+      data: deletedPost,
+    });
+  } catch (error) {
+    return res.send({
+      message: "error occured",
+      data: error,
+    });
+  }
+};
+
+module.exports = {
+  create,
+  allPost,
+  postById,
+  postByUserId,
+  updatePost,
+  deletePost,
+};
